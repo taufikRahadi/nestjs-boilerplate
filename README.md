@@ -1,27 +1,3 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
@@ -29,7 +5,10 @@
 ## Installation
 
 ```bash
+# install dependencies
 $ pnpm install
+# create .env file
+$ cp .env.example .env
 ```
 
 ## Running the app
@@ -58,16 +37,111 @@ $ pnpm run test:e2e
 $ pnpm run test:cov
 ```
 
-## Support
+## Database
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+# generate migration
+$ pnpm typeorm:generate-migration ./src/database/migrations/MigrationName
 
-## Stay in touch
+# run migration
+$ pnpm typeorm:run-migrations
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# revert migration
+$ pnpm typeorm:revert-migrations
+```
 
-## License
+## TODO
 
-Nest is [MIT licensed](LICENSE).
+- Add seeder module and command line.
+- Create e2e test utilities module.
+- Add enum response error code for some cases.
+
+## Authentication
+
+- SignIn: `POST /api/v1/auth`
+- Refresh Token: `POST /api/v1/auth`
+
+## Authorization
+
+```typescript
+//  set allowed roles, it automatically check user role in RolesGuard
+@AllowedRoles('superadmin', 'finance')
+@UseGuards(AuthJwtGuard, RolesGuard)
+```
+
+## Base
+
+We can use Base Module to extend CRUD functionalities. For now, you can only use BaseService, it will automatically inject CRUD functions to your service.
+example:
+
+```typescript
+/*
+  Extends BaseService, BaseService accept 4 generic types and 2 arguments.
+  Generic type for BaseService including Id type (On this case, we use custom type), Entity class, CreateDTO, and UpdateDTO.
+
+  BaseService also accepts 2 arguments. First one is your entity repository, and tableAlias. Because, BaseService is using queryBuilder for fetch data list using paginations in case you have a complex query.
+*/
+@Injectable()
+export class RoleService extends BaseService<
+  StringId,
+  Role,
+  CreateRoleDto,
+  UpdateRoleDto
+> {
+  constructor(
+    @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
+  ) {
+    super(roleRepository, 'roles')
+  }
+}
+```
+
+Don't forget to imports BaseModule to use PaginationService etc.
+
+```typescript
+@Module({
+  imports: [
+    BaseModule,
+    ...
+  ]
+})
+export class RoleModule {}
+```
+
+## Validations
+
+### IsUnique
+
+We can use @IsUnique decorator to check if data sent from the client is already registered. @IsUnique accepts 3 arguments. column name, entity class that already extends BaseEntityObj class and validationOptions so you can override class-validator options.
+
+```typescript
+
+export class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  fullname: string
+
+  @IsEmail()
+  @IsNotEmpty()
+  @IsUnique('email', User, {
+    message: `Email already registered`,
+  })
+  email: string
+```
+
+### IsExists
+
+@IsExists decorator can check to your database if the data is exists or not. This decorator arguments is same with IsUnique.
+
+```typescript
+export class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  fullname: string
+
+  @IsUUID()
+  @IsExists('id', Role, {
+    message: `Role not found`
+  })
+  role_id
+```

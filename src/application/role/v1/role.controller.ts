@@ -31,12 +31,7 @@ import { RolesGuard } from '../../../common/guards/roles.guard'
 @UseInterceptors(ClassSerializerInterceptor)
 export class RoleControllerV1 {
   constructor(
-    private readonly roleService: RoleService<
-      StringId,
-      Role,
-      CreateRoleDto,
-      UpdateRoleDto
-    >,
+    private readonly roleService: RoleService,
     public paginationService: PaginationService,
   ) {}
 

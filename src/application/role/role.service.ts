@@ -7,12 +7,12 @@ import { Repository } from 'typeorm'
 
 export type StringId = string
 
-export class RoleService<
+export class RoleService extends BaseService<
   StringId,
   Role,
   CreateRoleDto,
-  UpdateRoleDto,
-> extends BaseService<StringId, Role, CreateRoleDto, UpdateRoleDto> {
+  UpdateRoleDto
+> {
   constructor(
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
   ) {

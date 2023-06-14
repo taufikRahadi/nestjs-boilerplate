@@ -8,17 +8,20 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { DetailUserDto } from './dto/detail-user.dto'
 import { UserService } from '../user.service'
-import { PaginationService } from 'src/utils/pagination.service'
-import { MainPaginationDTO } from 'src/common/dto/main-pagination.dto'
-import { ResponseMessage } from 'src/common/decorators/response-message'
+import { PaginationService } from '../../../utils/pagination.service'
+import { MainPaginationDTO } from '../../../common/dto/main-pagination.dto'
+import { ResponseMessage } from '../../../common/decorators/response-message'
+import { AuthJwtGuard } from '../../../common/guards/auth-jwt.guard'
 
 @Controller('v1/user')
+@UseGuards(AuthJwtGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class UserControllerV1 {
   constructor(
